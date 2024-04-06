@@ -17,12 +17,12 @@ func main() {
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 
 	if err != nil {
-		log.Fatal("Error : ", err)
+		fmt.Println("Error : ", err)
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 
 	if err != nil {
-		log.Fatal("Error : ", err)
+		fmt.Println("Error : ", err)
 	}
 
 	ctx := context.Background()
