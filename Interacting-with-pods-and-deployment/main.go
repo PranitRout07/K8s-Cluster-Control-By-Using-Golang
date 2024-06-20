@@ -4,35 +4,56 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"path/filepath"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func main() {
-	kubeconfig := flag.String("kubeconfig", "C:\\Users\\prani\\.kube\\config", "Kuberconfig location") //kubeconfig path
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Error getting home directory:", err)
+		return
+	}
+
+	kubeconfig := flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "Kubeconfig location")
+	flag.Parse()
 
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-
 	if err != nil {
-		fmt.Println("Error : ", err)
+		fmt.Println("Error:", err)
+
+		config,err = rest.InClusterConfig()
+		if err!=nil{
+			fmt.Println("error",err)
+		} 
+
 	}
-	clientset, err := kubernetes.NewForConfig(config)
 
+	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Println("Error : ", err)
+		fmt.Println("Error:", err)
+		
 	}
 
 	ctx := context.Background()
-	pods, err := clientset.CoreV1().Pods("default").List(ctx, metav1.ListOptions{})
-	if err != nil {
-		log.Fatal("Error : ", err)
+	Pods, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{})
+	fmt.Println("Pods are:-")
+	for _,i := range Pods.Items{
+		fmt.Println(i.Name)
 	}
-	fmt.Printf("\n%s\t %s", "CreationTime", "Pod Name")
 
-	for _, pod := range pods.Items {
-		fmt.Printf("\n%s\t %s", pod.CreationTimestamp, pod.Name)
+	//get deployments 
+
+	Deployments,err := clientSet.AppsV1().Deployments("default").List(ctx,metav1.ListOptions{})
+	fmt.Println("Deployments are:-")
+	if err!=nil{
+		fmt.Println(err)
+	}
+	for _,i := range Deployments.Items {
+		fmt.Println(i.Name)
 	}
 }
